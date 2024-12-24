@@ -11,6 +11,17 @@ const configuration = new Configuration({
 
 const gemini = new OpenAIApi(configuration);
 
+// Handle GET requests
+export async function GET(request: Request) {
+  return NextResponse.json({ message: "GET request to conversation API" });
+}
+
+// Handle POST requests
+export async function POST(request: Request) {
+  const body = await request.json();
+  return NextResponse.json({ message: "POST request received", data: body });
+}
+
 // export const POST = async (req: Request ) =>  {
 
 //     try {
