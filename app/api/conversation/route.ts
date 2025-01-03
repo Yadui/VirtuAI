@@ -1,23 +1,24 @@
-import { auth } from "@clerk/nextjs";
+// app/api/convo/route.ts
 import { NextResponse } from "next/server";
-import { Configuration, OpenAIApi } from "openai";
 
-import { incrementApiLimit, checkApiLimit } from "@/lib/api-limit";
-import { checkSubscription } from "@/lib/subscription";
-
-const configuration = new Configuration({
-  apiKey: process.env.GEMINI_AI_KEY,
-});
-
-const gemini = new OpenAIApi(configuration);
-
-// Handle GET requests
-export async function GET(request: Request) {
-  return NextResponse.json({ message: "GET request to conversation API" });
-}
-
-// Handle POST requests
 export async function POST(request: Request) {
-  const body = await request.json();
-  return NextResponse.json({ message: "POST request received", data: body });
+  const { prompt } = await request.json();
+
+  // Make the API request to Pollination (replace with the actual endpoint)
+  const response = await fetch(
+    `https://text.pollinations.ai/prompt/${encodeURIComponent(prompt)}`
+  );
+
+  if (!response.ok) {
+    return NextResponse.json(
+      { error: "Failed to fetch data from Pollination API" },
+      { status: 500 }
+    );
+  }
+
+  // Since the response is plain text, we read it as text.
+  const data = await response.text();
+
+  // Return the plain text response to the frontend
+  return NextResponse.json({ reply: data });
 }
