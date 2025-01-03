@@ -6,7 +6,7 @@ export async function POST(request: Request) {
 
   // Make the API request to Pollination (replace with the actual endpoint)
   const response = await fetch(
-    `https://text.pollinations.ai/prompt/${encodeURIComponent(prompt)}`
+    `https://text.pollinations.ai/${encodeURIComponent(prompt)}`
   );
 
   if (!response.ok) {

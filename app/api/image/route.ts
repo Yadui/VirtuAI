@@ -1,3 +1,5 @@
+import { checkApiLimit, incrementApiLimit } from "@/lib/api-limit";
+import { checkSubscription } from "@/lib/subscription";
 import { NextResponse } from "next/server";
 export const POST = async (req: Request) => {
   try {
@@ -41,7 +43,11 @@ export const POST = async (req: Request) => {
       ).toString("base64")}`;
       responses.push(base64Image);
     }
-
+    const freeTrial = await checkApiLimit();
+    const isPro = await checkSubscription();
+    if (!isPro) {
+      await incrementApiLimit();
+    }
     return NextResponse.json({ images: responses });
   } catch (error) {
     console.error("[IMAGE_ERROR]", error);
