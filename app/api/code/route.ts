@@ -1,61 +1,24 @@
-import { auth } from "@clerk/nextjs";
+// app/api/convo/route.ts
 import { NextResponse } from "next/server";
-import { ChatCompletionRequestMessage, Configuration, OpenAIApi } from "openai";
 
-import { incrementApiLimit, checkApiLimit } from "@/lib/api-limit";
-import { checkSubscription } from "@/lib/subscription";
+export async function POST(request: Request) {
+  const { prompt } = await request.json();
 
-const configuration = new Configuration({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+  // Make the API request to Pollination (replace with the actual endpoint)
+  const response = await fetch(
+    `https://text.pollinations.ai/${encodeURIComponent(prompt)}`
+  );
 
-const openai = new OpenAIApi(configuration);
-
-const instructionMessage: ChatCompletionRequestMessage = {
-  role: "system",
-  content:
-    "You are a code generator. You must answer only in markdown code snippets. Use code comments for explanations.",
-};
-
-export const POST = async (req: Request) => {
-  try {
-    const { userId } = auth();
-    const body = await req.json();
-    const { messages } = body;
-
-    if (!userId) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
-
-    if (!configuration.apiKey) {
-      return new NextResponse("OpenAI API Key not configured.", {
-        status: 500,
-      });
-    }
-
-    if (!messages) {
-      return new NextResponse("Messages are required", { status: 400 });
-    }
-
-    const freeTrial = await checkApiLimit();
-    const isPro = await checkSubscription();
-
-    if (!freeTrial && !isPro) {
-      return new NextResponse("Free Trial has expired", { status: 403 });
-    }
-
-    const response = await openai.createChatCompletion({
-      model: "gpt-3.5-turbo",
-      messages: [instructionMessage, ...messages],
-    });
-
-    if (!isPro) {
-      await incrementApiLimit();
-    }
-
-    return NextResponse.json(response.data.choices[0].message);
-  } catch (error) {
-    console.log("[CODE_ERROR]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+  if (!response.ok) {
+    return NextResponse.json(
+      { error: "Failed to fetch data from Pollination API" },
+      { status: 500 }
+    );
   }
-};
+
+  // Since the response is plain text, we read it as text.
+  const data = await response.text();
+
+  // Return the plain text response to the frontend
+  return NextResponse.json({ reply: data });
+}
