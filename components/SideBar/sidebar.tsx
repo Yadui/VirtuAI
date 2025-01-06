@@ -72,6 +72,7 @@ const routes = [
 interface SidebarProps {
   apiLimitCount: number;
   isPro: boolean;
+  onLinkClick?: () => void;
 }
 
 export const Sidebar = ({ apiLimitCount = 0, isPro = false }: SidebarProps) => {

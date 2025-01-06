@@ -10,7 +10,7 @@ import { CrispProvider } from "@/components/CrispChat/crisp-provider";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "local",
+  title: "VirtAI",
   description: "AI Platform",
 };
 

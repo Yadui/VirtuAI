@@ -27,8 +27,11 @@ export const POST = async (req: Request) => {
       const apiUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(
         prompt
       )}?seed=${randomSeed}&resolution=${resolution}`;
-
+      const isPro = await checkSubscription();
       const response = await fetch(apiUrl);
+      if (response && !isPro) {
+        await incrementApiLimit();
+      }
 
       if (!response.ok) {
         return NextResponse.json(
@@ -45,8 +48,8 @@ export const POST = async (req: Request) => {
     }
     const freeTrial = await checkApiLimit();
     const isPro = await checkSubscription();
-    if (!isPro) {
-      await incrementApiLimit();
+    if (!freeTrial && !isPro) {
+      return new NextResponse("Free Trial has expired", { status: 403 });
     }
     return NextResponse.json({ images: responses });
   } catch (error) {
