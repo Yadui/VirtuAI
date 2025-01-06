@@ -42,6 +42,7 @@ import { Download } from "lucide-react";
 //- Pro modal and error handling
 import { useProModal } from "@/hooks/use-pro-modal";
 import { toast } from "react-hot-toast";
+import { FreeCounter } from "@/components/SubscriptionModel/free-counter";
 
 const ImagePage = () => {
   const proModal = useProModal();
@@ -68,6 +69,9 @@ const ImagePage = () => {
 
       if (response.data.images) {
         setImages(response.data.images);
+      }
+      {
+        FreeCounter;
       }
 
       form.reset();
