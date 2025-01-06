@@ -73,7 +73,11 @@ const ConvoPage = () => {
               disabled={loading}
               className="flex-1"
             />
-            <Button onClick={handleMessageSend} disabled={loading}>
+            <Button
+              onClick={handleMessageSend}
+              disabled={loading}
+              variant="premium"
+            >
               Send
             </Button>
           </div>

@@ -1,8 +1,23 @@
 // app/api/convo/route.ts
 import { NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
+import { incrementApiLimit, checkApiLimit } from "@/lib/api-limit";
+import { checkSubscription } from "@/lib/subscription";
 
 export async function POST(request: Request) {
   const { prompt } = await request.json();
+  const { userId } = await auth();
+
+  if (!userId) {
+    return new NextResponse("Unauthorized", { status: 401 });
+  }
+
+  const freeTrial = await checkApiLimit();
+  const isPro = await checkSubscription();
+
+  if (!freeTrial && !isPro) {
+    return new NextResponse("Free Trial has expired", { status: 403 });
+  }
 
   // Make the API request to Pollination (replace with the actual endpoint)
   const response = await fetch(
@@ -18,6 +33,10 @@ export async function POST(request: Request) {
 
   // Since the response is plain text, we read it as text.
   const data = await response.text();
+
+  if (response && !isPro) {
+    await incrementApiLimit();
+  }
 
   // Return the plain text response to the frontend
   return NextResponse.json({ reply: data });

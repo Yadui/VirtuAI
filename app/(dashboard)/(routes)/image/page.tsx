@@ -175,6 +175,7 @@ const ImagePage = () => {
                 type="submit"
                 disabled={isLoading}
                 size="icon"
+                variant="premium"
               >
                 Generate
               </Button>

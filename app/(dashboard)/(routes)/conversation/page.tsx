@@ -63,7 +63,7 @@ const ConvoPage = () => {
         bgColor="bg-green-700/10"
       />
 
-      <div className="px-4 lg:px-8">
+      <div className="px-4 lg:px-8 container">
         <div className="rounded-lg border w-full p-4 mb-4">
           <div className="flex items-center gap-2">
             <Input
@@ -73,7 +73,11 @@ const ConvoPage = () => {
               disabled={loading}
               className="flex-1"
             />
-            <Button onClick={handleMessageSend} disabled={loading}>
+            <Button
+              onClick={handleMessageSend}
+              disabled={loading}
+              variant="premium"
+            >
               Send
             </Button>
           </div>
@@ -97,11 +101,12 @@ const ConvoPage = () => {
                 className={cn(
                   "p-4 rounded-lg",
                   message.role === "user"
-                    ? "bg-blue-100 text-black"
+                    ? "bg-blue-100 text-black border-2 border-black"
                     : "bg-gray-100 text-black"
                 )}
               >
                 {message.role === "bot" && <BotAvatar />}
+                {message.role === "user" && <UserAvatar />}
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]} // Enable Markdown table support
                   components={{
