@@ -1,178 +1,152 @@
 "use client";
 
-import { Music } from "lucide-react";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-
-import { Heading } from "@/components/Header/heading";
-import { Button } from "@/components/ui/button";
-
-
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm"; // GitHub Flavored Markdown plugin
+import { BotAvatar } from "@/components/GeneralUI/bot-avatar";
+import { UserAvatar } from "@/components/GeneralUI/user-avatar";
 import { Empty } from "@/components/GeneralUI/empty";
 import { Loader } from "@/components/GeneralUI/loader";
-
-
-//- Form Schema and hooks : 
-import * as z from "zod";
-import { formSchema } from "./constants";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-
-
-//- Form related 
-import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
+import { Heading } from "@/components/Header/heading";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
+import { MessageSquare } from "lucide-react";
 
-
-
-//- Api req 
-import axios from "axios";
-import { ChatCompletionRequestMessage } from "openai";
-
-
-
-
-//- Pro modal and error handling
-import { useProModal } from "@/hooks/use-pro-modal";
-import { toast } from "react-hot-toast";
-
-
-
-
-
-const MusicPage = () => {
-
-
-    const proModal = useProModal();
-
-
-    const router = useRouter();
-
-
-    const [music, setMusic] = useState<string>();
-
-
-
-    const form = useForm<z.infer<typeof formSchema>>({
-        resolver: zodResolver(formSchema),
-        defaultValues: {
-            prompt: ""
-        }
-    });
-
-
-
-
-    const isLoading = form.formState.isSubmitting;
-
-
-
-
-
-    const onSubmit = async (values: z.infer<typeof formSchema>) => {
-        try {
-            setMusic(undefined);
-            
-
-            const response = await axios.post('/api/music', values);
-
-            setMusic(response.data.audio);
-
-            form.reset();
-
-        } 
-        catch (error: any) {
-
-            if (error?.response?.status === 403) {
-                proModal.onOpen();
-            } else {
-                toast.error("Something went wrong.");
-            }
-            console.log(error);
-
-        } finally {
-            router.refresh();
-        }
-    }
-
-
-
-
-
-    return (
-        <div>
-            <Heading
-                title="Music Generation"
-                description="Turn your prompt into music."
-                icon={Music}
-                iconColor="text-emerald-500"
-                bgColor="bg-emerald-500/10"
-            />
-
-
-
-            <div className="px-4 lg:px-8">
-
-
-                <div>
-                    <Form {...form}>
-                        <form
-                            onSubmit={form.handleSubmit(onSubmit)}
-                            className="rounded-lg border w-full p-4 px-3 md:px-6 focus-within:shadow-sm grid grid-cols-12 gap-2"
-                        >
-                            <FormField
-                                name="prompt"
-                                render={({ field }) => (
-                                    <FormItem className="col-span-12 lg:col-span-10">
-                                        <FormControl className="m-0 p-0">
-                                            <Input
-                                                className="border-0 outline-none focus-visible:ring-0 focus-visible:ring-transparent"
-                                                disabled={isLoading}
-                                                placeholder="Piano Solo"
-                                                {...field}
-                                            />
-                                        </FormControl>
-                                    </FormItem>
-                                )}
-                            />
-
-                            <Button className="col-span-12 lg:col-span-2 w-full" type="submit" disabled={isLoading} size="icon">
-                                Generate
-                            </Button>
-                        </form>
-                    </Form>
-                </div>
-
-
-
-                <div className="space-y-4 mt-4">
-
-                    {isLoading && (
-                        <div className="p-8 rounded-lg w-full flex items-center justify-center bg-muted">
-                            <Loader />
-                        </div>
-                    )}
-
-
-                    {!music && !isLoading && (
-                        <Empty label="No music generated." />
-                    )}
-
-
-                    {music && (
-                        <audio controls className="w-full mt-8">
-                            <source src={music} />
-                        </audio>
-                    )}
-
-                </div>
-            
-
-
-            </div>
-            
-        </div>
-    );
+interface Message {
+  role: "user" | "bot";
+  content: string;
 }
 
-export default MusicPage;
+const ConvoPage = () => {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [newMessage, setNewMessage] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
+
+  const handleMessageSend = async () => {
+    if (!newMessage.trim()) return;
+
+    // Add user's message to the conversation
+    setMessages((prev) => [...prev, { role: "user", content: newMessage }]);
+    setNewMessage("");
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/conversation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: newMessage }),
+      });
+
+      const data = await res.json();
+      const reply = data.reply || "No response received";
+
+      // Add bot's response to the conversation
+      setMessages((prev) => [...prev, { role: "bot", content: reply }]);
+    } catch (error) {
+      setMessages((prev) => [
+        ...prev,
+        { role: "bot", content: "Error occurred while fetching the response" },
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div>
+      <Heading
+        title="Conversation"
+        description="Chat with the bot using natural language."
+        icon={MessageSquare}
+        iconColor="text-green-700"
+        bgColor="bg-green-700/10"
+      />
+
+      <div className="px-4 lg:px-8">
+        <div className="rounded-lg border w-full p-4 mb-4">
+          <div className="flex items-center gap-2">
+            <Input
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              placeholder="Ask the bot something..."
+              disabled={loading}
+              className="flex-1"
+            />
+            <Button onClick={handleMessageSend} disabled={loading}>
+              Send
+            </Button>
+          </div>
+        </div>
+
+        <div className="space-y-4 mt-4">
+          {loading && (
+            <div className="p-8 rounded-lg w-full flex items-center justify-center bg-muted">
+              <Loader />
+            </div>
+          )}
+
+          {messages.length === 0 && !loading && (
+            <Empty label="No conversation started." />
+          )}
+
+          <div className="flex flex-col-reverse gap-y-4">
+            {messages.map((message, index) => (
+              <div
+                key={index}
+                className={cn(
+                  "p-4 rounded-lg",
+                  message.role === "user"
+                    ? "bg-blue-100 text-black"
+                    : "bg-gray-100 text-black"
+                )}
+              >
+                {message.role === "bot" && <BotAvatar />}
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]} // Enable Markdown table support
+                  components={{
+                    table: ({ node, ...props }) => (
+                      <div className="overflow-x-auto my-4">
+                        <table className="table-auto border-collapse border border-gray-300 w-full text-sm text-left">
+                          {props.children}
+                        </table>
+                      </div>
+                    ),
+                    thead: ({ node, ...props }) => (
+                      <thead className="bg-gray-200">{props.children}</thead>
+                    ),
+                    tr: ({ node, ...props }) => (
+                      <tr className="border-b border-gray-300">
+                        {props.children}
+                      </tr>
+                    ),
+                    th: ({ node, ...props }) => (
+                      <th className="px-4 py-2 font-bold border border-gray-300">
+                        {props.children}
+                      </th>
+                    ),
+                    td: ({ node, ...props }) => (
+                      <td className="px-4 py-2 border border-gray-300">
+                        {props.children}
+                      </td>
+                    ),
+                    code: ({ node, ...props }) => (
+                      <code
+                        className="bg-gray-200 rounded-md px-2 py-1 text-sm text-black "
+                        {...props}
+                      />
+                    ),
+                  }}
+                >
+                  {message.content || ""}
+                </ReactMarkdown>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ConvoPage;
