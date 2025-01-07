@@ -75,15 +75,18 @@ interface SidebarProps {
   onLinkClick?: () => void;
 }
 
-export const Sidebar = ({ apiLimitCount = 0, isPro = false }: SidebarProps) => {
-  //- Note :
-  //* This is client component
+//- Note :
+//* This is client component
 
-  //* We are fetching apiCount in Server component directly having access to Prisma
-  //_ which is Layout component
+//* We are fetching apiCount in Server component directly having access to Prisma
+//_ which is Layout component
 
-  //* So we are fetching there and accepting here via prop (in Client component ())
-
+//* So we are fetching there and accepting here via prop (in Client component ())
+export const Sidebar = ({
+  apiLimitCount = 0,
+  isPro = false,
+  onLinkClick,
+}: SidebarProps) => {
   const pathname = usePathname();
 
   return (
@@ -94,7 +97,7 @@ export const Sidebar = ({ apiLimitCount = 0, isPro = false }: SidebarProps) => {
             <Image fill alt="Logo" src="/logo.png" />
           </div>
           <h1 className={cn("text-2xl font-bold", poppins.className)}>
-            Prodigy
+            VirtuAI
           </h1>
         </Link>
 
@@ -103,6 +106,7 @@ export const Sidebar = ({ apiLimitCount = 0, isPro = false }: SidebarProps) => {
             <Link
               key={route.href}
               href={route.href}
+              onClick={onLinkClick} // Invoke the onLinkClick function when a link is clicked
               className={cn(
                 "text-sm group flex p-3 w-full justify-start font-medium cursor-pointer hover:text-white hover:bg-white/10 rounded-lg transition",
                 pathname === route.href
